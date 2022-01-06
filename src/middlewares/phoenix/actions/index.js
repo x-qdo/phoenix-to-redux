@@ -201,8 +201,11 @@ export function connectToPhoenixChannelForEvents({
             channel,
           })
         );
-        dispatch(endPhoenixChannelProgress({ channelTopic, loadingStatusKey: channelTopic }));
+        dispatch(
+          endPhoenixChannelProgress({ dispatch, channelTopic, loadingStatusKey: channelTopic })
+        );
         if (channelResponseEvent) {
+          console.log(channelResponseEvent, dispatch, response);
           dispatch({
             type: channelResponseEvent,
             data: response,
