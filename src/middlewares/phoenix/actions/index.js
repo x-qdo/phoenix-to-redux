@@ -71,7 +71,7 @@ export function leaveChannel({ dispatch, channelTopic, socket }) {
 export function endPhoenixChannelProgress({ channelTopic, loadingStatusKey = null }) {
   return {
     type: PHOENIX_CHANNEL_END_PROGRESS,
-    data: {
+    payload: {
       channelTopic,
       loadingStatusKey,
     },
@@ -101,19 +101,19 @@ export function connectToPhoenixChannel({ socket, channelTopic, dispatch, token 
     dispatch(phoenixChannelError({ channel, channelTopic }));
   });
 
-  channel.on(phoenixChannelStatuses.CHANNEL_PRESENCE_CHANGE, (data) => {
+  channel.on(phoenixChannelStatuses.CHANNEL_PRESENCE_CHANGE, (payload) => {
     dispatch({
       type: channelActionTypes.CHANNEL_PRESENCE_CHANGE,
-      data,
+      payload,
       eventName: phoenixChannelStatuses.CHANNEL_PRESENCE_CHANGE,
       channelTopic,
     });
   });
 
-  channel.on(phoenixChannelStatuses.CHANNEL_PRESENCE_STATE, (data) => {
+  channel.on(phoenixChannelStatuses.CHANNEL_PRESENCE_STATE, (payload) => {
     dispatch({
       type: channelActionTypes.CHANNEL_PRESENCE_STATE,
-      data,
+      payload,
       eventName: phoenixChannelStatuses.CHANNEL_PRESENCE_STATE,
       channelTopic,
     });
@@ -150,7 +150,7 @@ export function connectPhoenixChannelPresence({ channel, dispatch }) {
       // console.log('user left from a device', leftPrescence);
     }
   });
-  // receive presence data from server
+  // receive presence payload from server
   presence.onSync(() => {
     dispatch(channelPresenceUpdate({ list: presence.list(), channel }));
   });
@@ -175,6 +175,8 @@ export function connectPhoenixChannelPresence({ channel, dispatch }) {
 export function connectToPhoenixChannelForEvents({
   dispatch,
   channelTopic,
+  channelResponseEvent,
+  channelErrorResponseEvent,
   logPresence,
   events,
   token = null,
@@ -199,7 +201,18 @@ export function connectToPhoenixChannelForEvents({
             channel,
           })
         );
-        dispatch(endPhoenixChannelProgress({ channelTopic, loadingStatusKey: channelTopic }));
+        dispatch(
+          endPhoenixChannelProgress({ dispatch, channelTopic, loadingStatusKey: channelTopic })
+        );
+        if (channelResponseEvent) {
+          console.log(channelResponseEvent, dispatch, response);
+          dispatch({
+            type: channelResponseEvent,
+            payload: response,
+            channelTopic,
+            channel,
+          });
+        }
       })
       .receive(channelStatuses.CHANNEL_ERROR, (response) => {
         if (response && response.reason === 'unauthorized') {
@@ -207,6 +220,12 @@ export function connectToPhoenixChannelForEvents({
         }
         dispatch(phoenixChannelJoinError({ error: response, channelTopic, channel }));
         dispatch(endPhoenixChannelProgress({ channelTopic, loadingStatusKey: channelTopic }));
+        dispatch({
+          type: channelErrorResponseEvent,
+          error: response,
+          channelTopic,
+          channel,
+        });
       })
       .receive(channelStatuses.CHANNEL_TIMEOUT, (response) => {
         dispatch(
@@ -217,21 +236,21 @@ export function connectToPhoenixChannelForEvents({
           })
         );
         dispatch(endPhoenixChannelProgress({ channelTopic, loadingStatusKey: channelTopic }));
+        dispatch({
+          type: channelErrorResponseEvent,
+          error: response,
+          channelTopic,
+          channel,
+        });
       });
-
-    return {
-      type: channelActionTypes.CHANNEL_UPDATED,
-      presence,
-      channel,
-    };
   }
 
   if (channel && events) {
     events.forEach(({ eventName, eventActionType }) => {
       const bindings = get(channel, 'bindings', []);
       if (!bindings.find(({ event }) => event === eventName)) {
-        channel.on(eventName, (data) => {
-          dispatch({ type: eventActionType, data, eventName, channelTopic });
+        channel.on(eventName, (payload) => {
+          dispatch({ type: eventActionType, payload, eventName, channelTopic });
         });
       }
     });
@@ -271,7 +290,7 @@ export function leaveEventsForPhoenixChannel({ channelTopic, dispatch, events, s
 export function updatePhoenixChannelLoadingStatus({ channelTopic, loadingStatusKey }) {
   return {
     type: PHOENIX_CHANNEL_LOADING_STATUS,
-    data: { channelTopic, loadingStatusKey },
+    payload: { channelTopic, loadingStatusKey },
   };
 }
 

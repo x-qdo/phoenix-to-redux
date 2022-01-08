@@ -42,7 +42,7 @@ export const createPhoenixChannelMiddleware = () => (store) => (next) => (action
   switch (action.type) {
     case PHOENIX_CONNECT_SOCKET: {
       const { dispatch } = store;
-      const { domainUrl, params } = action.data;
+      const { domainUrl, params } = action.payload;
       const currentState = store.getState();
       let socket = selectPhoenixSocket(currentState);
       const socketDetails = selectPhoenixSocketDetails(currentState);
@@ -103,7 +103,7 @@ export const createPhoenixChannelMiddleware = () => (store) => (next) => (action
         channelPushTimeOut,
         channelTimeOutEvent,
         loadingStatusKey,
-      } = action.data;
+      } = action.payload;
       const channel = findChannelByName({ channelTopic, socket });
 
       if (channel) {
@@ -112,7 +112,7 @@ export const createPhoenixChannelMiddleware = () => (store) => (next) => (action
         }
         channel
           .push(eventName, requestData, channelPushTimeOut)
-          .receive(channelStatuses.CHANNEL_OK, (data) => {
+          .receive(channelStatuses.CHANNEL_OK, (payload) => {
             if (endProgressDelay) {
               setTimeout(() => {
                 dispatch(endPhoenixChannelProgress({ channelTopic, loadingStatusKey }));
@@ -120,18 +120,18 @@ export const createPhoenixChannelMiddleware = () => (store) => (next) => (action
             } else {
               dispatch(endPhoenixChannelProgress({ channelTopic, loadingStatusKey }));
             }
-            dispatch({ type: channelActionTypes.CHANNEL_PUSH, data });
+            dispatch({ type: channelActionTypes.CHANNEL_PUSH, payload });
             if (channelResponseEvent) {
               if (additionalData) {
                 dispatch({
                   type: channelResponseEvent,
                   channelTopic,
-                  data,
+                  payload,
                   additionalData,
                   dispatch,
                 });
               } else {
-                dispatch({ type: channelResponseEvent, data, dispatch });
+                dispatch({ type: channelResponseEvent, payload, dispatch });
               }
             }
           })
@@ -182,7 +182,7 @@ export const createPhoenixChannelMiddleware = () => (store) => (next) => (action
       const currentState = store.getState();
       const socket = selectPhoenixSocket(currentState);
 
-      const { channelTopic } = action.data;
+      const { channelTopic } = action.payload;
       leaveChannel({ channelTopic, socket, dispatch });
       return store.getState();
     }
@@ -191,7 +191,7 @@ export const createPhoenixChannelMiddleware = () => (store) => (next) => (action
       const currentState = store.getState();
       const socket = selectPhoenixSocket(currentState);
 
-      const { channelTopic, events } = action.data;
+      const { channelTopic, events } = action.payload;
       leaveEventsForPhoenixChannel({ channelTopic, socket, events, dispatch });
       return store.getState();
     }
@@ -202,7 +202,15 @@ export const createPhoenixChannelMiddleware = () => (store) => (next) => (action
       const socketDetails = selectPhoenixSocketDetails(currentState);
       const phoenixDomain = selectPhoenixSocketDomain(currentState);
       const socketDomain = socket ? socket.endPoint : '';
-      const { channelTopic, domainUrl, events, channelToken, logPresence } = action.data;
+      const {
+        channelTopic,
+        channelResponseEvent,
+        channelErrorResponseEvent,
+        domainUrl,
+        events,
+        channelToken,
+        logPresence,
+      } = action.payload;
 
       const domain = formatSocketDomain({ domainString: domainUrl || phoenixDomain });
       const loggedInDomain = `${domain}/websocket`;
@@ -231,6 +239,8 @@ export const createPhoenixChannelMiddleware = () => (store) => (next) => (action
         connectToPhoenixChannelForEvents({
           dispatch,
           channelTopic,
+          channelResponseEvent,
+          channelErrorResponseEvent,
           events,
           logPresence,
           token: channelToken,
