@@ -14,7 +14,7 @@ import {
 export function leavePhoenixChannel({ channelTopic }) {
   return {
     type: PHOENIX_LEAVE_CHANNEL,
-    data: {
+    payload: {
       channelTopic,
     },
   };
@@ -29,7 +29,7 @@ export function leavePhoenixChannel({ channelTopic }) {
 export function leavePhoenixChannelEvents({ channelTopic, events }) {
   return {
     type: PHOENIX_LEAVE_CHANNEL_EVENTS,
-    data: {
+    payload: {
       channelTopic,
       events,
     },
@@ -45,7 +45,7 @@ export function leavePhoenixChannelEvents({ channelTopic, events }) {
 export function leavePhoenixChannelEvent({ channelTopic, event }) {
   return {
     type: PHOENIX_LEAVE_CHANNEL_EVENTS,
-    data: {
+    payload: {
       channelTopic,
       events: [event],
     },
@@ -76,7 +76,7 @@ export function getPhoenixChannel({
 }) {
   return {
     type: PHOENIX_GET_CHANNEL,
-    data: {
+    payload: {
       channelTopic,
       channelResponseEvent,
       channelErrorResponseEvent,
@@ -119,7 +119,7 @@ export function pushToPhoenixChannel({
 }) {
   return {
     type: PHOENIX_PUSH_TO_CHANNEL,
-    data: {
+    payload: {
       channelTopic,
       endProgressDelay,
       eventName,

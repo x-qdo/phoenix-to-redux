@@ -17,7 +17,7 @@ export function disconnectPhoenix() {
 export function connectPhoenix({ domainUrl, params = {} }) {
   return {
     type: PHOENIX_CONNECT_SOCKET,
-    data: {
+    payload: {
       domainUrl,
       params,
     },
