@@ -243,12 +243,6 @@ export function connectToPhoenixChannelForEvents({
           channel,
         });
       });
-
-    return {
-      type: channelActionTypes.CHANNEL_UPDATED,
-      presence,
-      channel,
-    };
   }
 
   if (channel && events) {
